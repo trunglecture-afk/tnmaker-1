@@ -1,0 +1,1403 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1565C0">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Chấm phiếu TN — Mẫu M.2025.40.10.12</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: #0a0a0f; color: #fff; overflow: hidden;
+    width: 100vw; height: 100vh; height: 100dvh;
+    touch-action: manipulation;
+  }
+  #app { width: 100%; height: 100%; position: relative; overflow: hidden; }
+
+  /* ===== Screens ===== */
+  .screen {
+    position: absolute; inset: 0;
+    display: none; flex-direction: column;
+    background: #0a0a0f;
+  }
+  .screen.active { display: flex; }
+
+  /* ===== Header ===== */
+  .app-header {
+    background: #1565C0; padding: 12px 16px;
+    display: flex; align-items: center; gap: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,.4); z-index: 10;
+  }
+  .app-header h1 { font-size: 16px; font-weight: 600; flex: 1; }
+  .app-header button {
+    background: rgba(255,255,255,.15); color: #fff;
+    border: none; border-radius: 8px; padding: 8px 14px;
+    font-size: 13px; cursor: pointer; font-weight: 500;
+  }
+  .app-header button:active { background: rgba(255,255,255,.3); }
+
+  /* ===== Home Screen ===== */
+  #homeScreen .content {
+    flex: 1; padding: 24px; overflow-y: auto;
+    display: flex; flex-direction: column;
+  }
+  .logo-area { text-align: center; margin: 20px 0 30px; }
+  .logo-icon { font-size: 64px; margin-bottom: 12px; }
+  .logo-title { font-size: 24px; font-weight: 700; color: #42A5F5; }
+  .logo-sub { font-size: 13px; color: #9e9e9e; margin-top: 4px; }
+
+  .feature-list { margin: 16px 0; }
+  .feature {
+    display: flex; align-items: center; gap: 14px;
+    padding: 12px 16px; margin-bottom: 8px;
+    background: #16161e; border-radius: 10px;
+    border-left: 3px solid #1565C0;
+  }
+  .feature-icon { font-size: 22px; }
+  .feature-text { font-size: 14px; color: #e0e0e0; }
+
+  .main-btn {
+    display: block; width: 100%;
+    background: #1565C0; color: #fff;
+    border: none; border-radius: 12px;
+    padding: 18px; font-size: 16px; font-weight: 600;
+    margin-top: 16px; cursor: pointer;
+    transition: background .2s;
+  }
+  .main-btn:active { background: #0D47A1; transform: scale(.98); }
+  .main-btn.secondary { background: #2a2a36; color: #e0e0e0; margin-top: 10px; }
+
+  /* ===== Camera Screen ===== */
+  #scannerScreen { background: #000; }
+  .camera-wrap {
+    flex: 1; position: relative; overflow: hidden;
+    display: flex; align-items: center; justify-content: center;
+  }
+  #video { width: 100%; height: 100%; object-fit: cover; }
+
+  /* Frame guide */
+  .frame-guide {
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    pointer-events: none;
+  }
+  .frame-inner {
+    width: 82%; max-width: 400px; aspect-ratio: 1 / 1.414;
+    border: 3px dashed rgba(76, 175, 80, .8); border-radius: 12px;
+    position: relative;
+  }
+  .frame-inner::before, .frame-inner::after {
+    content: ''; position: absolute; width: 30px; height: 30px;
+    border-color: #4CAF50; border-style: solid;
+  }
+  .frame-inner::before {
+    top: -3px; left: -3px;
+    border-width: 4px 0 0 4px; border-top-left-radius: 12px;
+  }
+  .frame-inner::after {
+    bottom: -3px; right: -3px;
+    border-width: 0 4px 4px 0; border-bottom-right-radius: 12px;
+  }
+
+  /* Status bar */
+  .status-bar {
+    position: absolute; bottom: 140px; left: 16px; right: 16px;
+    background: rgba(0,0,0,.75); backdrop-filter: blur(8px);
+    padding: 12px 16px; border-radius: 10px;
+    font-size: 13px; text-align: center; color: #e0e0e0;
+    display: none;
+  }
+  .status-bar.show { display: block; }
+
+  /* Capture button */
+  .capture-bar {
+    padding: 16px 24px 28px;
+    background: linear-gradient(to top, rgba(0,0,0,.9), transparent);
+    display: flex; justify-content: center; align-items: center;
+  }
+  .capture-btn {
+    width: 72px; height: 72px; border-radius: 50%;
+    background: #fff; border: 5px solid rgba(255,255,255,.5);
+    cursor: pointer; position: relative;
+    box-shadow: 0 0 20px rgba(255,255,255,.3);
+  }
+  .capture-btn:active { transform: scale(.95); }
+  .capture-btn.processing {
+    background: #666; cursor: not-allowed;
+  }
+  .capture-btn.processing::after {
+    content: ''; position: absolute; inset: -8px;
+    border: 3px solid transparent; border-top-color: #4CAF50;
+    border-radius: 50%; animation: spin 1s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ===== Result Screen ===== */
+  #resultScreen .content {
+    flex: 1; padding: 16px; overflow-y: auto;
+  }
+  .score-card {
+    background: linear-gradient(135deg, #1565C0, #0D47A1);
+    border-radius: 16px; padding: 28px 20px; text-align: center;
+    margin-bottom: 16px;
+  }
+  .score-label { font-size: 13px; opacity: .8; }
+  .score-value { font-size: 56px; font-weight: 800; margin: 8px 0; }
+  .score-max { font-size: 15px; opacity: .7; }
+
+  .part-card {
+    background: #16161e; border-radius: 12px;
+    padding: 16px; margin-bottom: 10px;
+    display: flex; align-items: center; gap: 14px;
+  }
+  .part-icon { font-size: 26px; }
+  .part-info { flex: 1; }
+  .part-title { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+  .part-detail { font-size: 12px; color: #9e9e9e; }
+  .part-score {
+    font-size: 20px; font-weight: 700; color: #42A5F5;
+  }
+
+  .info-card {
+    background: #16161e; border-radius: 12px;
+    padding: 14px 16px; margin-bottom: 10px;
+    font-size: 13px; line-height: 1.5;
+  }
+  .info-card.warn { border-left: 3px solid #FF9800; }
+  .info-card h3 { font-size: 13px; color: #FFA726; margin-bottom: 8px; }
+  .info-card ul { list-style: none; }
+  .info-card li {
+    padding: 4px 0; color: #e0e0e0;
+    border-bottom: 1px solid rgba(255,255,255,.05);
+  }
+  .info-card li:last-child { border-bottom: none; }
+
+  .warp-preview {
+    width: 100%; border-radius: 12px;
+    margin-top: 10px; background: #000;
+    display: block;
+  }
+
+  /* ===== Settings Modal ===== */
+  .modal {
+    position: fixed; inset: 0; z-index: 100;
+    background: rgba(0,0,0,.85); backdrop-filter: blur(4px);
+    display: none; align-items: center; justify-content: center;
+    padding: 20px;
+  }
+  .modal.active { display: flex; }
+  .modal-content {
+    background: #16161e; border-radius: 16px;
+    padding: 24px; width: 100%; max-width: 360px;
+  }
+  .modal-content h2 { font-size: 18px; margin-bottom: 16px; }
+  .modal-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,.08);
+  }
+  .modal-row:last-of-type { border-bottom: none; }
+  .modal-row label { font-size: 14px; }
+  .modal-row input[type=range] { width: 130px; }
+  .modal-row input[type=number] {
+    width: 70px; padding: 6px 8px; border-radius: 6px;
+    background: #0a0a0f; color: #fff;
+    border: 1px solid #333; font-size: 13px;
+  }
+  .modal-row span.value { font-size: 13px; color: #42A5F5; min-width: 40px; text-align: right; }
+
+  .loading-overlay {
+    position: absolute; inset: 0; z-index: 100;
+    background: rgba(0,0,0,.85);
+    display: none; flex-direction: column;
+    align-items: center; justify-content: center;
+    text-align: center; padding: 20px;
+  }
+  .loading-overlay.active { display: flex; }
+  .loading-spinner {
+    width: 50px; height: 50px;
+    border: 4px solid rgba(255,255,255,.1); border-top-color: #4CAF50;
+    border-radius: 50%; animation: spin 1s linear infinite;
+    margin-bottom: 16px;
+  }
+  .loading-text { font-size: 14px; color: #e0e0e0; }
+
+  .error-toast {
+    position: fixed; bottom: 24px; left: 16px; right: 16px;
+    background: #d32f2f; color: #fff; padding: 14px 16px;
+    border-radius: 10px; font-size: 14px; z-index: 200;
+    transform: translateY(200px); transition: transform .3s;
+    box-shadow: 0 4px 20px rgba(0,0,0,.5);
+  }
+  .error-toast.show { transform: translateY(0); }
+
+  /* ===== MOBILE FIXES ===== */
+  html { -webkit-text-size-adjust: 100%; }
+  body { overscroll-behavior: none; -webkit-user-select: none; user-select: none; }
+  .app-header {
+    padding: calc(10px + env(safe-area-inset-top)) calc(12px + env(safe-area-inset-right)) 10px calc(12px + env(safe-area-inset-left));
+    gap: 8px;
+  }
+  .app-header h1 { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .app-header button { min-height: 40px; min-width: 40px; white-space: nowrap; }
+  #homeScreen .content, #resultScreen .content {
+    min-height: 0; -webkit-overflow-scrolling: touch;
+    padding-left: max(16px, env(safe-area-inset-left));
+    padding-right: max(16px, env(safe-area-inset-right));
+    padding-bottom: calc(16px + env(safe-area-inset-bottom));
+  }
+  .main-btn { min-height: 52px; }
+  .camera-wrap { min-height: 0; }
+  .frame-guide { container-type: size; }
+  .frame-inner { width: 82%; width: min(92cqw, 62cqh); max-width: none; aspect-ratio: 1 / 1.414; }
+  .status-bar { bottom: 16px; }
+  .capture-bar { padding: 14px 24px calc(20px + env(safe-area-inset-bottom)); }
+  .capture-btn { touch-action: manipulation; }
+  .cv-chip {
+    font-size: 12px; text-align: center; padding: 8px 12px; border-radius: 999px;
+    background: #16161e; color: #9e9e9e; margin: 4px auto 0; width: fit-content;
+  }
+  .cv-chip.ok { color: #66BB6A; } .cv-chip.err { color: #EF5350; cursor: pointer; }
+  .modal { padding: max(20px, env(safe-area-inset-top)) 20px max(20px, env(safe-area-inset-bottom)); }
+  .modal-content { max-height: 100%; overflow-y: auto; }
+  .modal-row { flex-wrap: wrap; gap: 8px; min-height: 48px; }
+  .modal-row input[type=range] { flex: 1; min-width: 100px; }
+  .modal-row input[type=number] { font-size: 16px; width: 80px; padding: 8px; }
+  .modal-row input[type=checkbox] { width: 24px; height: 24px; }
+  .error-toast { bottom: calc(24px + env(safe-area-inset-bottom)); }
+  .warp-preview { cursor: zoom-in; }
+  #viewer { position: fixed; inset: 0; z-index: 150; background: #000; display: none; overflow: auto; -webkit-overflow-scrolling: touch; }
+  #viewer.active { display: block; }
+  #viewer img { width: 200vw; max-width: none; display: block; }
+  #viewer .close { position: fixed; top: calc(10px + env(safe-area-inset-top)); right: 12px; z-index: 151;
+    background: rgba(0,0,0,.7); color: #fff; border: 1px solid #555; border-radius: 8px; padding: 10px 16px; font-size: 14px; }
+  @media (orientation: landscape) and (max-height: 520px) {
+    .app-header { padding-top: calc(6px + env(safe-area-inset-top)); padding-bottom: 6px; }
+    .logo-area { margin: 6px 0 12px; } .logo-icon { font-size: 36px; }
+    #scannerScreen .capture-bar {
+      position: absolute; right: env(safe-area-inset-right); top: 50%; transform: translateY(-50%);
+      padding: 12px; background: none; z-index: 5;
+    }
+    .score-value { font-size: 40px; }
+  }
+
+  table.rs { width: 100%; border-collapse: collapse; font-size: 13px; }
+  table.rs th, table.rs td { padding: 9px 4px; text-align: center; border-bottom: 1px solid rgba(255,255,255,.08); }
+  table.rs th { color: #42A5F5; font-size: 12px; position: sticky; top: 0; background: #0a0a0f; }
+  table.rs td.b { font-weight: 700; color: #66BB6A; }
+  .tw { overflow-x: auto; } .row2 { display: flex; gap: 10px; margin-bottom: 10px; }
+  .row2 label { flex: 1; font-size: 12px; color: #9e9e9e; }
+  .row2 input, select.sel { width: 100%; margin-top: 4px; padding: 12px; font-size: 20px; letter-spacing: 2px; text-align: center;
+    background: #0a0a0f; color: #fff; border: 1px solid #333; border-radius: 8px; }
+  select.sel { font-size: 15px; letter-spacing: 0; margin: 0 0 10px; }
+  .x { background: none; border: none; color: #EF5350; font-size: 16px; padding: 6px; }
+  .small { font-size: 12px; color: #9e9e9e; }
+  input, select, textarea { -webkit-user-select: text; user-select: text; } /* iOS: body user-select:none làm ô nhập không gõ được */
+  .status-bar, .modal { -webkit-backdrop-filter: blur(6px); }
+  #lastBanner { position: absolute; top: 10px; left: 12px; right: 12px; z-index: 6; display: none; background: rgba(21,101,192,.94);
+    padding: 10px 14px; border-radius: 12px; text-align: center; font-size: 14px; }
+  #lastBanner.show { display: block; } #lastBanner .big { font-size: 32px; font-weight: 800; display: block; line-height: 1.1; }
+  input.txt { width: 100%; margin-top: 4px; padding: 12px; font-size: 16px; background: #0a0a0f; color: #fff; border: 1px solid #333; border-radius: 8px; }
+  #examScreen .row2 input { font-size: 16px; letter-spacing: 0; padding: 10px 4px; }
+  .row2 .main-btn { flex: 1; margin: 0; min-height: 48px; padding: 10px 4px; font-size: 13px; }
+  td.nm { text-align: left; font-size: 12px; max-width: 90px; }
+
+  /* ===== Trình sửa đáp án trên ảnh ===== */
+  #editor { position: fixed; inset: 0; z-index: 160; background: #000; display: none; flex-direction: column; }
+  #editor.active { display: flex; }
+  .ed-bar { background: #1565C0; padding: calc(8px + env(safe-area-inset-top)) 10px 8px; display: flex; flex-direction: column; gap: 6px; }
+  .ed-row { display: flex; align-items: center; gap: 6px; }
+  .ed-bar button { background: rgba(255,255,255,.18); color: #fff; border: none; border-radius: 8px; padding: 9px 12px; font-size: 14px; min-height: 40px; white-space: nowrap; }
+  .ed-bar button:active { background: rgba(255,255,255,.35); }
+  .ed-bar .chip { flex: 1; padding: 7px 4px; font-size: 12px; min-height: 34px; }
+  #edInfo { flex: 1; font-size: 12px; line-height: 1.3; min-width: 0; }
+  #edScore { font-size: 20px; font-weight: 800; min-width: 48px; text-align: right; }
+  #edScroll { flex: 1; min-height: 0; overflow: auto; -webkit-overflow-scrolling: touch; background: #222; }
+  #edCv { display: block; max-width: none; }
+  td.ed { cursor: pointer; text-decoration: underline dotted rgba(255,255,255,.4); }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- ================= HOME SCREEN ================= -->
+  <div id="homeScreen" class="screen active">
+    <div class="app-header">
+      <h1>📋 Chấm phiếu TN 2025</h1>
+      <button onclick="openSettings()">⚙️</button>
+    </div>
+    <div class="content">
+      <div class="logo-area">
+        <div class="logo-icon">📄</div>
+        <div class="logo-title">Chấm Phiếu Trắc Nghiệm</div>
+        <div class="logo-sub">Mẫu M.2025.40.10.12 · 40 / 10 / 12 câu</div>
+      </div>
+
+      <div class="info-card" id="homeInfo"></div>
+      <div id="cvChip" class="cv-chip" onclick="retryCV()">⏳ Đang tải bộ xử lý ảnh...</div>
+      <button class="main-btn" onclick="startScanner()">📸 BẮT ĐẦU QUÉT</button>
+      <button class="main-btn secondary" onclick="$('camInput').click()">📷 CHỤP BẰNG CAMERA MÁY (nét nhất)</button>
+      <input type="file" id="camInput" accept="image/*" capture="environment" style="display:none" onchange="handleFileUpload(event)">
+      <button class="main-btn secondary" onclick="document.getElementById('fileInput').click()">
+        🖼️ CHỌN ẢNH TỪ THƯ VIỆN
+      </button>
+      <button class="main-btn secondary" onclick="showScreen('examScreen');renderExam()">🗂️ KỲ THI & THANG ĐIỂM</button>
+      <button class="main-btn secondary" onclick="showScreen('keysScreen');renderKeys()">📑 ĐÁP ÁN (EXCEL YOUNGMIX)</button>
+      <button class="main-btn secondary" onclick="showScreen('listScreen');renderList()">📊 KẾT QUẢ ĐÃ CHẤM</button>
+      <input type="file" id="fileInput" accept="image/*" style="display:none" onchange="handleFileUpload(event)">
+
+      <div style="height: 24px;"></div>
+    </div>
+  </div>
+
+  <!-- ================= SCANNER SCREEN ================= -->
+  <div id="scannerScreen" class="screen">
+    <div class="app-header">
+      <button onclick="stopScanner()">← Quay lại</button>
+      <h1 style="text-align:center;">Quét phiếu</h1>
+      <button onclick="openSettings()">⚙️</button>
+    </div>
+    <div class="camera-wrap">
+      <video id="video" autoplay playsinline webkit-playsinline muted></video>
+      <div class="frame-guide">
+        <div class="frame-inner"></div>
+      </div>
+      <div id="statusBar" class="status-bar"></div>
+      <div id="lastBanner"></div>
+    </div>
+    <div class="capture-bar">
+      <button id="captureBtn" class="capture-btn" onclick="capturePhoto()"></button>
+    </div>
+  </div>
+
+  <!-- ================= RESULT SCREEN ================= -->
+  <div id="resultScreen" class="screen">
+    <div class="app-header">
+      <button onclick="backToHome()">← Trang chủ</button>
+      <h1>Kết quả chấm</h1>
+      <button onclick="scanAgain()">📸 Quét lại</button>
+    </div>
+    <div class="content" id="resultContent"></div>
+  </div>
+
+  <!-- ================= SETTINGS MODAL ================= -->
+  <div id="examScreen" class="screen">
+    <div class="app-header"><button onclick="showScreen('homeScreen')">← Trang chủ</button><h1>Kỳ thi & thang điểm</h1></div>
+    <div class="content" style="flex:1;overflow-y:auto;padding:16px;min-height:0">
+      <select id="exSel" class="sel" onchange="pickExam(this.value)"></select>
+      <div class="row2"><button class="main-btn secondary" onclick="newExam()">➕ Kỳ thi mới</button><button class="main-btn secondary" onclick="renameExam()">✏️ Đổi tên</button><button class="main-btn secondary" onclick="delExam()">🗑️ Xoá</button></div>
+      <div class="info-card" id="exInfo"></div>
+      <div class="info-card"><h3>Thang điểm của kỳ thi này</h3>
+        <select id="preset" class="sel" onchange="applyPreset(this.value)"><option value="">Chọn mẫu thang điểm…</option><option value="t25">THPT 2025 (0,25 · 0,1/0,25/0,5/1 · 0,25)</option><option value="t10">THPT 2025, quy về thang 10</option><option value="eq">Mỗi câu như nhau, quy về thang 10</option></select>
+        <div class="row2"><label>Phần I (điểm/câu)<input id="ep1" type="text" inputmode="decimal" onchange="saveScoring()"></label><label>Phần III (điểm/câu)<input id="ep3" type="text" inputmode="decimal" onchange="saveScoring()"></label></div>
+        <div class="small" style="margin-bottom:6px">Phần II — điểm của 1 câu theo số ý đúng:</div>
+        <div class="row2"><label>1 ý<input id="e1" type="text" inputmode="decimal" onchange="saveScoring()"></label><label>2 ý<input id="e2" type="text" inputmode="decimal" onchange="saveScoring()"></label><label>3 ý<input id="e3" type="text" inputmode="decimal" onchange="saveScoring()"></label><label>4 ý<input id="e4" type="text" inputmode="decimal" onchange="saveScoring()"></label></div>
+        <div class="row2"><label>Quy về thang (0 = không)<input id="esc" type="text" inputmode="decimal" onchange="saveScoring()"></label><label>Làm tròn (số lẻ 0–3)<input id="ern" type="text" inputmode="numeric" onchange="saveScoring()"></label></div>
+        <div class="small">Đổi thang điểm sẽ tự chấm lại các bài đã lưu của kỳ thi này.</div>
+      </div>
+      <button class="main-btn secondary" onclick="$('rosterInput').click()">👥 Nạp danh sách học sinh (cột SBD, Họ tên)</button>
+      <input type="file" id="rosterInput" accept=".xlsx,.xls,.csv" style="display:none" onchange="importRoster(event)">
+    </div></div>
+  <div id="keysScreen" class="screen">
+    <div class="app-header"><button onclick="showScreen('homeScreen')">← Trang chủ</button><h1>Đáp án</h1></div>
+    <div class="content" style="flex:1;overflow-y:auto;padding:16px;min-height:0">
+      <button class="main-btn" style="margin-top:0" onclick="$('xlsInput').click()">📥 Tải file Excel đáp án lên</button>
+      <button class="main-btn secondary" onclick="templateXlsx()">📄 Tải file Excel mẫu</button>
+      <input type="file" id="xlsInput" accept=".xlsx,.xls,.csv" style="display:none" onchange="importKeys(event)">
+      <div id="keysList" style="margin-top:14px"></div>
+    </div></div>
+  <div id="listScreen" class="screen">
+    <div class="app-header"><button onclick="showScreen('homeScreen')">← Trang chủ</button><h1>Kết quả</h1><button onclick="exportXlsx()">📤 Excel</button></div>
+    <div class="content" style="flex:1;overflow-y:auto;padding:16px;min-height:0">
+      <select id="fMd" class="sel" onchange="renderList()"></select>
+      <div id="stats" class="info-card"></div>
+      <div class="tw"><table class="rs"><thead><tr><th>SBD</th><th>Họ tên</th><th>Mã</th><th>I</th><th>II</th><th>III</th><th>Tổng</th><th></th></tr></thead><tbody id="rows"></tbody></table></div>
+      <button class="main-btn secondary" onclick="regradeAll()">🔄 Chấm lại tất cả theo đáp án hiện tại</button>
+      <button class="main-btn secondary" onclick="clearAll()">🗑️ Xoá toàn bộ kết quả</button>
+    </div></div>
+
+  <div id="settingsModal" class="modal">
+    <div class="modal-content">
+      <h2>⚙️ Cài đặt</h2>
+      <div class="modal-row">
+        <label>Ngưỡng tô đậm</label>
+        <input type="range" id="thresholdRange" min="20" max="80" value="45"
+               oninput="updateThreshold(this.value)">
+        <span class="value" id="thresholdVal">45%</span>
+      </div>
+      <div class="modal-row">
+        <label>Hiện vị trí bong bóng</label>
+        <input type="checkbox" id="debugCheckbox" onchange="toggleDebug(this.checked)">
+      </div>
+      <div class="modal-row"><label>Tự lưu & quét tiếp khi đọc đủ SBD + mã đề</label><input type="checkbox" id="autoCb"></div>
+      <button class="main-btn" style="margin-top:16px;" onclick="closeSettings()">Đóng</button>
+    </div>
+  </div>
+
+  <!-- ================= LOADING OVERLAY ================= -->
+  <div id="loadingOverlay" class="loading-overlay">
+    <div class="loading-spinner"></div>
+    <div class="loading-text" id="loadingText">Đang khởi tạo OpenCV...</div>
+  </div>
+
+  <!-- ================= ERROR TOAST ================= -->
+  <div id="errorToast" class="error-toast"></div>
+
+  <div id="editor">
+    <div class="ed-bar">
+      <div class="ed-row">
+        <button onclick="closeEditor()">✓ Xong</button>
+        <div id="edInfo"></div>
+        <div id="edScore"></div>
+        <button onclick="edZoom(-0.5)">−</button><button onclick="edZoom(0.5)">＋</button>
+      </div>
+      <div class="ed-row">
+        <button class="chip" onclick="edJump('sbd')">SBD · Mã đề</button>
+        <button class="chip" onclick="edJump('p1')">Phần I</button>
+        <button class="chip" onclick="edJump('p2')">Phần II</button>
+        <button class="chip" onclick="edJump('p3')">Phần III</button>
+      </div>
+    </div>
+    <div id="edScroll"><canvas id="edCv"></canvas></div>
+  </div>
+  <div id="viewer"><button class="close" onclick="closeViewer()">✕ Đóng</button><img id="viewerImg" alt=""></div>
+
+</div>
+
+<!-- Libraries -->
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+
+<script>
+'use strict';
+
+// =====================================================================
+// GLOBAL STATE
+// =====================================================================
+const state = {
+  cvReady: false,
+  stream: null,
+  threshold: 0.45,
+  debug: false,
+  scores: { p1: 0.25, p2: 0, p3: 0.25 }, keys: {}, results: {}, cur: null, exams: {}, ex: null, curId: null, auto: false,
+  template: null,
+  lastQR: null,
+  lastWarped: null, // canvas
+  lastResult: null,
+};
+
+const $ = id => document.getElementById(id);
+const ld = (k, d) => { try { return JSON.parse(localStorage.getItem(k)) || d; } catch (e) { return d; } };
+const sv = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { showError("Không lưu được dữ liệu (bộ nhớ đầy?)"); } };
+const K = 2, OX = 29.1, OY = 25.85, REF_W = 1074, REF_H = 1581; // toạ độ 4 marker góc → khung chuẩn (pt × 2)
+
+// =====================================================================
+// TEMPLATE BUILDER (Port từ Flutter)
+// =====================================================================
+
+
+// =====================================================================
+// OPENCV LOADING
+// =====================================================================
+function waitForOpenCV() {
+  return new Promise((resolve) => {
+    const check = () => {
+      if (typeof cv !== 'undefined') {
+        if (cv.Mat) return resolve();
+        if (typeof cv.then === 'function') { cv.then(() => resolve()); return; }
+        if (cv.onRuntimeInitialized === undefined) { cv['onRuntimeInitialized'] = () => resolve(); return; }
+      }
+      setTimeout(check, 100);
+    };
+    check();
+  });
+}
+
+// Tải OpenCV động, có nguồn dự phòng + timeout (tránh treo màn hình khi mạng yếu)
+function loadOpenCV() {
+  if (window._cvP) return window._cvP;
+  const urls = [
+    'https://docs.opencv.org/4.8.0/opencv.js',
+    'https://cdn.jsdelivr.net/npm/@techstark/opencv-js@4.9.0-release.3/dist/opencv.js'
+  ];
+  window._cvP = (async () => {
+    for (const u of urls) {
+      try {
+        await new Promise((res, rej) => {
+          const s = document.createElement('script');
+          s.src = u; s.onload = res; s.onerror = () => rej(new Error('load ' + u));
+          document.head.appendChild(s);
+        });
+        await Promise.race([waitForOpenCV(),
+          new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 90000))]);
+        state.cvReady = true;
+        return;
+      } catch (e) { console.warn('OpenCV:', e); }
+    }
+    window._cvP = null;
+    throw new Error('Không tải được OpenCV. Kiểm tra mạng rồi thử lại.');
+  })();
+  return window._cvP;
+}
+
+function setChip(cls, text) {
+  const c = document.getElementById('cvChip');
+  c.className = 'cv-chip ' + cls; c.textContent = text;
+}
+function retryCV() {
+  if (state.cvReady || window._cvP) return;
+  setChip('', '⏳ Đang tải bộ xử lý ảnh...');
+  loadOpenCV().then(() => setChip('ok', '✅ Bộ xử lý ảnh sẵn sàng'))
+              .catch(e => setChip('err', '⚠️ ' + e.message + ' (chạm để thử lại)'));
+}
+async function ensureCV() {
+  if (state.cvReady) return;
+  document.getElementById('loadingText').textContent = 'Đang tải OpenCV...';
+  document.getElementById('loadingOverlay').classList.add('active');
+  try { await loadOpenCV(); }
+  finally { document.getElementById('loadingOverlay').classList.remove('active'); }
+}
+
+// =====================================================================
+// CAMERA
+// =====================================================================
+async function startScanner() {
+  showScreen('scannerScreen');
+  if (state.stream) { $('video').play().catch(() => {}); return; }
+  try {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia)
+      throw new Error('trình duyệt không hỗ trợ hoặc trang chưa chạy HTTPS');
+    const s = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: { ideal: 'environment' }, width: { ideal: 1920 }, height: { ideal: 1080 } },
+      audio: false
+    });
+    if (!document.getElementById('scannerScreen').classList.contains('active')) {
+      s.getTracks().forEach(t => t.stop()); return;
+    }
+    state.stream = s;
+    const video = document.getElementById('video');
+    video.srcObject = s;
+    await video.play();
+  } catch (e) {
+    showError('Không mở được camera: ' + e.message + '. Hãy dùng nút chọn ảnh.');
+    showScreen('homeScreen');
+  }
+}
+
+function stopStream() {
+  if (state.stream) { state.stream.getTracks().forEach(t => t.stop()); state.stream = null; }
+  const v = document.getElementById('video'); if (v) v.srcObject = null;
+}
+function stopScanner() { showScreen('homeScreen'); }
+
+// =====================================================================
+// CAPTURE
+// =====================================================================
+async function capturePhoto() {
+  const video = document.getElementById('video');
+  const btn = document.getElementById('captureBtn');
+  if (btn.classList.contains('processing')) return;
+  if (!video.videoWidth) { showError('Camera chưa sẵn sàng'); return; }
+
+  // Cắt đúng vùng đang hiển thị (object-fit: cover) để khớp khung hướng dẫn
+  const vw = video.videoWidth, vh = video.videoHeight;
+  const r = video.getBoundingClientRect();
+  const s = Math.max(r.width / vw, r.height / vh);
+  const sw = r.width / s, sh = r.height / s;
+  const c = document.createElement('canvas');
+  c.width = Math.round(sw); c.height = Math.round(sh);
+  c.getContext('2d').drawImage(video, (vw - sw) / 2, (vh - sh) / 2, sw, sh, 0, 0, c.width, c.height);
+  await processCanvas(c);
+}
+
+async function handleFileUpload(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  e.target.value = '';
+  const url = URL.createObjectURL(file), img = new Image();
+  img.onload = async () => {
+    // Vẽ thẳng ở kích thước nhỏ (iOS giới hạn bộ nhớ canvas, ảnh 12MP dễ làm tab bị tải lại)
+    const k = Math.min(1, 2000 / Math.max(img.naturalWidth, img.naturalHeight));
+    const c = document.createElement('canvas');
+    c.width = Math.round(img.naturalWidth * k); c.height = Math.round(img.naturalHeight * k);
+    c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+    URL.revokeObjectURL(url);
+    await processCanvas(c);
+  };
+  img.onerror = () => { URL.revokeObjectURL(url); showError('Không đọc được ảnh này (HEIC?). Hãy chụp lại.'); };
+  img.src = url;
+}
+function rotateCanvas(c, deg) {
+  const o = document.createElement('canvas'), h = deg === 180;
+  o.width = h ? c.width : c.height; o.height = h ? c.height : c.width;
+  const x = o.getContext('2d'); x.translate(o.width / 2, o.height / 2); x.rotate(deg * Math.PI / 180);
+  x.drawImage(c, -c.width / 2, -c.height / 2); return o;
+}
+
+// =====================================================================
+// PROCESSING PIPELINE
+// =====================================================================
+async function processCanvas(srcCanvas) {
+  const btn = document.getElementById('captureBtn');
+  const overlay = document.getElementById('loadingOverlay');
+  const text = document.getElementById('loadingText');
+  if (btn) btn.classList.add('processing');
+  let src = null;
+  try {
+    await ensureCV();
+    text.textContent = 'Đang xử lý phiếu...';
+    overlay.classList.add('active');
+    await new Promise(r => setTimeout(r, 30)); // cho UI kịp vẽ overlay
+
+    // 1) Thu nhỏ để tăng tốc & tiết kiệm RAM điện thoại
+    let work = srcCanvas;
+    const MAX_DIM = 2000;
+    if (Math.max(srcCanvas.width, srcCanvas.height) > MAX_DIM) {
+      const k = MAX_DIM / Math.max(srcCanvas.width, srcCanvas.height);
+      work = document.createElement('canvas');
+      work.width = Math.round(srcCanvas.width * k);
+      work.height = Math.round(srcCanvas.height * k);
+      work.getContext('2d').drawImage(srcCanvas, 0, 0, work.width, work.height);
+    }
+
+    if (work.width > work.height) work = rotateCanvas(work, 90); // ảnh chụp ngang → dựng đứng
+    state.lastWork = work;
+
+    // 2) QR
+    let qrData = null;
+    try {
+      const d = work.getContext('2d').getImageData(0, 0, work.width, work.height);
+      const qr = jsQR(d.data, d.width, d.height);
+      if (qr) qrData = qr.data;
+    } catch (e) { console.warn('QR scan failed:', e); }
+
+    // 3) Tìm góc + warp
+    src = cv.imread(work);
+    const corners = findCorners(src);
+    if (!corners) throw new Error('Không tìm thấy 4 góc phiếu. Hãy chụp lại, đủ sáng và thấy rõ 4 góc.');
+    const warped = warpPerspective(src, corners);
+    src.delete(); src = null;
+
+    // 4) Chuyển sang canvas rồi giải phóng Mat (tránh rò rỉ bộ nhớ)
+    const wc = document.createElement('canvas');
+    cv.imshow(wc, warped);
+    warped.delete();
+    const imgData = wc.getContext('2d').getImageData(0, 0, wc.width, wc.height);
+
+    // 5) Chấm
+    showReview(qrData, detectBubbles(imgData), wc);
+  } catch (e) {
+    console.error(e);
+    showError(e.message || 'Lỗi xử lý ảnh');
+  } finally {
+    if (src) src.delete();
+    overlay.classList.remove('active');
+    if (btn) btn.classList.remove('processing');
+    hideStatus();
+  }
+}
+
+// =====================================================================
+// FIND CORNERS
+// =====================================================================
+function findCorners(mat) {
+  const w = mat.cols, h = mat.rows;
+  const gray = new cv.Mat();
+  cv.cvtColor(mat, gray, cv.COLOR_RGBA2GRAY);
+
+  // Threshold (invert: dark → white)
+  const thresh = new cv.Mat();
+  cv.GaussianBlur(gray, gray, new cv.Size(5, 5), 0);
+  cv.threshold(gray, thresh, 0, 255, cv.THRESH_BINARY_INV | cv.THRESH_OTSU);
+
+  // Tìm contour
+  const contours = new cv.MatVector();
+  const hierarchy = new cv.Mat();
+  cv.findContours(thresh, contours, hierarchy, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE);
+
+  // Lọc contour ứng viên làm góc:
+  //   - Diện tích trong khoảng hợp lý (marker nhỏ)
+  //   - Gần 4 góc ảnh
+  const minArea = (w * h) * 0.000012;
+  const maxArea = (w * h) * 0.0008;
+
+  const candidates = [];
+  for (let i = 0; i < contours.size(); i++) {
+    const cnt = contours.get(i);
+    const area = cv.contourArea(cnt);
+    if (area < minArea || area > maxArea) { cnt.delete(); continue; }
+    const rect = cv.boundingRect(cnt);
+    const ar = Math.min(rect.width, rect.height) / Math.max(rect.width, rect.height);
+    if (ar < 0.5 || area / (rect.width * rect.height) < 0.6) { cnt.delete(); continue; } // không vuông/đặc
+
+    const cx = rect.x + rect.width / 2;
+    const cy = rect.y + rect.height / 2;
+
+    // Distances to 4 corners
+    const dTL = cx * cx + cy * cy;
+    const dTR = (w - cx) * (w - cx) + cy * cy;
+    const dBL = cx * cx + (h - cy) * (h - cy);
+    const dBR = (w - cx) * (w - cx) + (h - cy) * (h - cy);
+    const minD = Math.min(dTL, dTR, dBL, dBR);
+
+    candidates.push({ x: cx, y: cy, area, d: minD });
+    cnt.delete();
+  }
+
+  gray.delete(); thresh.delete(); contours.delete(); hierarchy.delete();
+
+  if (candidates.length < 4) return null;
+
+  // Chọn 4 marker tốt nhất: 1 cho mỗi góc
+  const pick = (corner) => {
+    let best = null, bestD = Infinity;
+    for (const c of candidates) {
+      const d = c.d + (corner === 'TL' ? c.y * 0 : 0);
+      // Score = distance to that corner
+      const dx = corner === 'TL' || corner === 'BL' ? c.x : (w - c.x);
+      const dy = corner === 'TL' || corner === 'TR' ? c.y : (h - c.y);
+      if (dx > w * 0.3 || dy > h * 0.3) continue;
+      const dist = dx * dx + dy * dy;
+      if (dist < bestD) { bestD = dist; best = c; }
+    }
+    return best;
+  };
+
+  const tl = pick('TL');
+  const tr = pick('TR');
+  const br = pick('BR');
+  const bl = pick('BL');
+  if (!tl || !tr || !br || !bl) return null;
+
+  // Sanity: TL < TR, BL < BR, TL < BL ...
+  if (tl.x > tr.x || bl.x > br.x || tl.y > bl.y || tr.y > br.y) return null;
+
+  return [tl, tr, br, bl];
+}
+
+// =====================================================================
+// WARP PERSPECTIVE
+// =====================================================================
+function warpPerspective(src, corners) {
+  const [tl, tr, br, bl] = corners;
+  const srcPts = cv.matFromArray(4, 1, cv.CV_32FC2, [
+    tl.x, tl.y, tr.x, tr.y, br.x, br.y, bl.x, bl.y
+  ]);
+  const dstPts = cv.matFromArray(4, 1, cv.CV_32FC2, [
+    0, 0, REF_W, 0, REF_W, REF_H, 0, REF_H
+  ]);
+  const M = cv.getPerspectiveTransform(srcPts, dstPts);
+  const warped = new cv.Mat();
+  cv.warpPerspective(src, warped, M,
+    new cv.Size(REF_W, REF_H), cv.INTER_LINEAR, cv.BORDER_CONSTANT, new cv.Scalar());
+
+  srcPts.delete(); dstPts.delete(); M.delete();
+  return warped;
+}
+
+// =====================================================================
+// BUBBLE DETECTION
+// =====================================================================
+
+
+
+
+// =====================================================================
+// GRADING
+// =====================================================================
+
+
+// =====================================================================
+// DISPLAY RESULT
+// =====================================================================
+
+
+function escapeHTML(s) {
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+
+
+// =====================================================================
+// UI HELPERS
+// =====================================================================
+
+function openViewer(src) {
+  document.getElementById('viewerImg').src = src;
+  document.getElementById('viewer').classList.add('active');
+}
+function closeViewer() { document.getElementById('viewer').classList.remove('active'); }
+
+function backToHome() {
+  showScreen('homeScreen');
+}
+
+function scanAgain() {
+  startScanner();
+}
+
+function showStatus(msg) {
+  const s = document.getElementById('statusBar');
+  s.textContent = msg;
+  s.classList.add('show');
+}
+
+function hideStatus() {
+  document.getElementById('statusBar').classList.remove('show');
+}
+
+function showError(msg) {
+  const t = document.getElementById('errorToast');
+  t.textContent = '⚠️ ' + msg;
+  t.classList.add('show');
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => t.classList.remove('show'), 4000);
+}
+
+function openSettings() {
+  $('settingsModal').classList.add('active');
+  $('thresholdRange').value = Math.round(state.threshold * 100);
+  $('thresholdVal').textContent = Math.round(state.threshold * 100) + '%';
+  $('debugCheckbox').checked = state.debug; $('autoCb').checked = state.auto;
+}
+
+function closeSettings() {
+  state.auto = $('autoCb').checked;
+  sv('tn_cfg', { th: state.threshold, auto: state.auto });
+  $('settingsModal').classList.remove('active');
+}
+
+function updateThreshold(v) {
+  state.threshold = parseInt(v) / 100;
+  document.getElementById('thresholdVal').textContent = v + '%';
+}
+
+function toggleDebug(v) {
+  state.debug = v;
+}
+
+// =====================================================================
+// INIT
+// =====================================================================
+
+
+
+// =====================================================================
+// MẪU PHIẾU M.2025.40.10.12 (toạ độ đo từ file PDF gốc, đơn vị pt)
+// =====================================================================
+const pt = (x, y, r) => ({ x: (x - OX) * K, y: (y - OY) * K, r: r * K });
+function buildTemplate() {
+  const t = { p1: [], p2: [], p3: [], sbd: [], md: [] };
+  for (let q = 0; q < 40; q++) for (let c = 0; c < 4; c++)
+    t.p1.push({ q: q + 1, o: 'ABCD'[c], ...pt(57.5 + c * 15.33, 278 + q * 13.09, 3.2) });
+  for (let b = 0; b < 5; b++) for (let u = 0; u < 2; u++) for (let i = 0; i < 4; i++) for (let s = 0; s < 2; s++)
+    t.p2.push({ q: b * 2 + u + 1, i, o: s ? 'S' : 'Đ', ...pt(142.2 + b * 89 + u * 34.6 + s * 16.2, 289.7 + i * 14.3, 3.2) });
+  const bx = [140.5, 202.8, 295.2, 357.6, 449.9, 512.2];
+  for (let q = 0; q < 12; q++) {
+    const x0 = bx[q % 6], y0 = q < 6 ? 405.4 : 628.7;
+    for (let c = 0; c < 4; c++) {
+      const x = x0 + c * 12.5;
+      if (c === 0) t.p3.push({ q: q + 1, c, o: '-', ...pt(x, y0, 3.2) });
+      if (c === 1 || c === 2) t.p3.push({ q: q + 1, c, o: ',', ...pt(x, y0 + 14.67, 3.2) });
+      for (let d = 0; d < 10; d++) t.p3.push({ q: q + 1, c, o: '' + d, ...pt(x, y0 + 14.67 * (d + 2), 3.2) });
+    }
+  }
+  for (let c = 0; c < 6; c++) for (let d = 0; d < 10; d++) t.sbd.push({ c, o: '' + d, ...pt(406.8 + c * 17.2, 88.1 + d * 15.88, 3.9) });
+  for (let c = 0; c < 3; c++) for (let d = 0; d < 10; d++) t.md.push({ c, o: '' + d, ...pt(517.5 + c * 16, 88.1 + d * 15.88, 3.9) });
+  state.template = t;
+}
+
+// =====================================================================
+// ĐỌC BONG BÓNG
+// =====================================================================
+function darkness(img, b) {
+  const { data, width, height } = img;
+  const cx = Math.round(b.x), cy = Math.round(b.y), r = Math.round(b.r);
+  let dark = 0, total = 0;
+  for (let dy = -r; dy <= r; dy++) for (let dx = -r; dx <= r; dx++) {
+    if (dx * dx + dy * dy > r * r) continue;
+    const px = cx + dx, py = cy + dy;
+    if (px < 0 || py < 0 || px >= width || py >= height) continue;
+    const i = (py * width + px) * 4;
+    if ((data[i] + data[i + 1] + data[i + 2]) / 3 < (state.lumThr || 140)) dark++;
+    total++;
+  }
+  return total ? dark / total : 0;
+}
+function readGroup(items, img) {
+  const v = items.map(b => [b.o, darkness(img, b)]).sort((a, b) => b[1] - a[1]);
+  const th = state.threshold;
+  return { best: v[0][1] > th ? v[0][0] : null, multi: v.length > 1 && v[1][1] > th };
+}
+function groupBy(a, f) { const m = {}; a.forEach(x => (m[f(x)] = m[f(x)] || []).push(x)); return m; }
+
+const W_SBD = 'Chưa đọc đủ 6 số báo danh (có thể để trống)', W_MD = 'Mã đề đọc chưa đủ 3 số';
+function detectBubbles(img) {
+  const t = state.template, w = [], o = { p1: {}, p2: {}, p3: {}, p3c: {}, sbd: '', made: '', warnings: w };
+  { // ước lượng độ sáng giấy từ các ô Phần I (đa số chưa tô) → ngưỡng tô thích nghi với ánh sáng
+    const L = t.p1.map(b => { let s = 0, n = 0; for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++) { const i = ((Math.round(b.y) + dy) * img.width + Math.round(b.x) + dx) * 4; if (i >= 0 && i < img.data.length - 3) { s += (img.data[i] + img.data[i + 1] + img.data[i + 2]) / 3; n++; } } return n ? s / n : 255; }).sort((a, b) => a - b);
+    state.lumThr = Math.max(70, Math.min(150, L[Math.floor(L.length * 0.75)] * 0.6)); }
+  const g1 = groupBy(t.p1, b => b.q);
+  for (const q in g1) {
+    const r = readGroup(g1[q], img);
+    if (r.multi) { o.p1[q] = '*'; w.push(`Câu ${q} (I): tô nhiều ô`); } else if (r.best) o.p1[q] = r.best;
+  }
+  const g2 = groupBy(t.p2, b => b.q + '_' + b.i);
+  for (const k in g2) {
+    const r = readGroup(g2[k], img);
+    if (r.multi) w.push(`Câu ${k.split('_')[0]} (II): tô cả Đ và S`); else if (r.best) o.p2[k] = r.best;
+  }
+  const g3 = groupBy(t.p3, b => b.q + '_' + b.c), cols = {};
+  for (const k in g3) {
+    const r = readGroup(g3[k], img), [q, c] = k.split('_');
+    (cols[q] = cols[q] || [])[c] = r.best && !r.multi ? r.best : '';
+  }
+  for (const q in cols) { o.p3c[q] = [0, 1, 2, 3].map(c => cols[q][c] || ''); o.p3[q] = o.p3c[q].join(''); }
+  for (const [name, list] of [['sbd', t.sbd], ['made', t.md]]) {
+    const g = groupBy(list, b => b.c);
+    o[name] = Object.keys(g).map(c => { const r = readGroup(g[c], img); return r.best && !r.multi ? r.best : '?'; }).join('');
+    if (o[name].includes('?')) w.push(name === 'sbd' ? W_SBD : W_MD);
+  }
+  return o;
+}
+
+// =====================================================================
+// ĐÁP ÁN: đọc file Excel (Youngmix) — nhận cả dạng "mỗi mã đề 1 dòng" và "mỗi mã đề 1 cột"
+// =====================================================================
+const normNum = s => String(s).trim().replace(/[−–]/g, '-').replace(/\./g, ',').replace(/\s+/g, '');
+// Mã đề trong Excel có thể 3–4 ký tự, phiếu chỉ có 3 cột → khớp chính xác, hoặc khớp theo 3 số cuối / bỏ số 0 đầu
+function candKeys(m) { return Object.keys(state.keys).filter(k => k === m || k.endsWith(m) || m.endsWith(k) || (/^\d+$/.test(k) && /^\d+$/.test(m) && +k === +m)); }
+function resolveKey(m) { if (!m) return null; if (state.keys[m]) return m; const c = candKeys(m); return c.length === 1 ? c[0] : null; }
+function parseStream(tk) {
+  tk = tk.map(v => String(v).trim().normalize('NFC')).filter(v => v);
+  const p1 = [], ch = [], p2 = [], p3 = []; let i = 0;
+  for (; i < tk.length && p1.length < 40; i++) {
+    if (/^[A-Da-d]+$/.test(tk[i])) p1.push(...tk[i].toUpperCase().split('')); else break;
+  }
+  for (; i < tk.length && /^[ĐđSsTtFf]+$/.test(tk[i]); i++)
+    for (const c of tk[i]) ch.push(/[ĐđTt]/.test(c) ? 'Đ' : 'S');
+  for (let j = 0; j + 3 < ch.length && p2.length < 10; j += 4) p2.push(ch.slice(j, j + 4));
+  tk.slice(i, i + 12).forEach(v => p3.push(normNum(v)));
+  return { p1: p1.slice(0, 40), p2, p3 };
+}
+// Định dạng YoungMix 2025: ô A1 "Đề\câu"; cột 1..40 = Phần I, 1a..8d = Phần II (Đ/S), 1..6 cuối = Phần III
+function parseYM(a) {
+  const hr = a.findIndex(r => /^đ[ềe]\s*[\\/]\s*câu$/i.test(String(r[0]).trim().normalize('NFC')));
+  if (hr < 0) return null;
+  const cols = []; let seen2 = false;
+  a[hr].forEach((h, j) => {
+    h = String(h).trim(); let m;
+    if (j === 0) return;
+    if ((m = h.match(/^(\d+)([a-dA-D])$/))) { seen2 = true; cols.push({ j, t: 2, q: +m[1], i: 'abcd'.indexOf(m[2].toLowerCase()) }); }
+    else if (/^\d+$/.test(h)) cols.push({ j, t: seen2 ? 3 : 1, q: +h });
+  });
+  const out = {};
+  for (let r = hr + 1; r < a.length; r++) {
+    const m = String(a[r][0]).trim();
+    if (!/^[0-9A-Za-z]{1,4}$/.test(m)) continue;
+    const k = { p1: [], p2: [], p3: [] };
+    cols.forEach(c => {
+      const v = String(a[r][c.j] == null ? '' : a[r][c.j]).trim().normalize('NFC');
+      if (!v) return;
+      if (c.t === 1 && c.q <= 40) k.p1[c.q - 1] = v.toUpperCase();
+      else if (c.t === 2 && c.q <= 10) (k.p2[c.q - 1] = k.p2[c.q - 1] || [])[c.i] = /^[ĐđDdTt]$/.test(v) ? 'Đ' : 'S';
+      else if (c.t === 3 && c.q <= 12) k.p3[c.q - 1] = normNum(v);
+    });
+    out[/^\d+$/.test(m) ? m.padStart(3, '0') : m] = k;
+  }
+  return out;
+}
+function parseWorkbook(wb) {
+  const out = {};
+  for (const n of wb.SheetNames) {
+    const a = XLSX.utils.sheet_to_json(wb.Sheets[n], { header: 1, defval: '', raw: true });
+    const ym = parseYM(a); if (ym) { Object.assign(out, ym); continue; }
+    let mc = -1, hr = -1;
+    outer: for (let r = 0; r < a.length; r++) for (let j = 0; j < a[r].length; j++)
+      if (/^m[ãa]\s*(đ[ềe])?\s*(thi)?$/i.test(String(a[r][j]).trim().normalize('NFC'))) { mc = j; hr = r; break outer; }
+    if (hr >= 0) {
+      for (let r = hr + 1; r < a.length; r++) {
+        const m = String(a[r][mc]).trim();
+        if (/^\d{1,3}$/.test(m)) out[m.padStart(3, '0')] = parseStream(a[r].slice(mc + 1));
+      }
+    } else {
+      for (let r = 0; r < a.length; r++) {
+        const hs = a[r].map((c, j) => [String(c).trim().match(/(?:^|\s)(\d{3})$/), j]).filter(x => x[0]);
+        if (!hs.length) continue;
+        hs.forEach(([m, j]) => { out[m[1]] = parseStream(a.slice(r + 1).map(x => x[j])); });
+        break;
+      }
+    }
+  }
+  for (const m in out) if (!out[m].p1.length && !out[m].p2.length && !out[m].p3.length) delete out[m];
+  return out;
+}
+function importKeys(e) {
+  const f = e.target.files[0]; e.target.value = '';
+  if (!f) return;
+  const fr = new FileReader();
+  fr.onload = () => {
+    try {
+      const keys = parseWorkbook(XLSX.read(fr.result, { type: 'array' }));
+      const n = Object.keys(keys).length;
+      if (!n) return showError('Không nhận dạng được đáp án. Hãy tải file mẫu để xem định dạng.');
+      Object.assign(state.keys, keys); saveAll(); renderKeys();
+      showError('✅ Đã nạp ' + n + ' mã đề'); $('errorToast').style.background = '#2E7D32';
+      setTimeout(() => $('errorToast').style.background = '', 4500);
+    } catch (err) { showError('Lỗi đọc Excel: ' + err.message); }
+  };
+  fr.readAsArrayBuffer(f);
+}
+function renderKeys() {
+  const ks = Object.keys(state.keys).sort();
+  $('keysList').innerHTML = ks.length ? ks.map(m => { const k = state.keys[m]; return `<div class="part-card"><div class="part-info"><div class="part-title">Mã đề ${m}</div><div class="part-detail">I: ${k.p1.filter(Boolean).length} câu · II: ${k.p2.filter(x => x && x.some(Boolean)).length} câu · III: ${k.p3.filter(Boolean).length} câu</div></div><button class="x" onclick="delKey('${m}')">✕</button></div>`; }).join('')
+    : '<div class="small">Chưa có đáp án. Tải file Excel (xuất từ Youngmix) lên.</div>';
+}
+function delKey(m) { delete state.keys[m]; saveAll(); renderKeys(); }
+function templateXlsx() {
+  const hd = ['Đề\\câu', ...Array.from({ length: 40 }, (_, i) => '' + (i + 1))];
+  for (let q = 1; q <= 8; q++) for (const c of 'abcd') hd.push(q + c);
+  for (let q = 1; q <= 6; q++) hd.push('' + q);
+  const row = m => { const r = [m]; for (let i = 0; i < 40; i++) r.push(i < 18 ? 'ABCD'[(i + +m) % 4] : ''); for (let i = 0; i < 32; i++) r.push((i + +m) % 3 ? 'D' : 'S'); return r.concat(['485', '545', '1,02', '0,67', '150', '731']); };
+  const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([hd, row('101'), row('102')]), 'Sheet1'); saveWb(wb, 'dap_an_youngmix_mau.xlsx');
+}
+
+// =====================================================================
+// CHẤM ĐIỂM (Phần II: 1 ý 0,1 · 2 ý 0,25 · 3 ý 0,5 · 4 ý 1,0)
+// =====================================================================
+const P2PTS = [0, 0.1, 0.25, 0.5, 1], r2 = x => Math.round(x * 100) / 100;
+function grade(omr, made) {
+  const k = state.keys[made], s = state.ex.sc, r = { noKey: !k, s1: 0, s2: 0, s3: 0, c1: 0, c3: 0, total: 0, max: 0, details: [] };
+  if (!k) return r;
+  let n1 = 0, n2 = 0, n3 = 0;
+  k.p1.forEach((a, i) => { if (!a) return; n1++; if (omr.p1[i + 1] === a) r.c1++; else r.details.push(`I.${i + 1}: ${omr.p1[i + 1] || 'trống'} (đúng ${a})`); });
+  k.p2.forEach((arr, i) => {
+    if (!arr || !arr.some(Boolean)) return; n2++;
+    let n = 0; arr.forEach((a, j) => { if (a && omr.p2[(i + 1) + '_' + j] === a) n++; });
+    r.s2 += s.p2[n]; if (n < 4) r.details.push(`II.${i + 1}: đúng ${n}/4 ý`);
+  });
+  k.p3.forEach((a, i) => { if (!a) return; n3++; const v = normNum(omr.p3[i + 1] || ''); if (v === a) r.c3++; else r.details.push(`III.${i + 1}: "${v || 'trống'}" (đúng "${a}")`); });
+  r.s1 = r.c1 * s.p1; r.s3 = r.c3 * s.p3;
+  const mx = n1 * s.p1 + n2 * s.p2[4] + n3 * s.p3, f = s.scale > 0 && mx > 0 ? s.scale / mx : 1, m = Math.pow(10, s.round);
+  const rd = x => Math.round(x * f * m) / m;
+  r.total = rd(r.s1 + r.s2 + r.s3); r.s1 = rd(r.s1); r.s2 = rd(r.s2); r.s3 = rd(r.s3); r.max = rd(mx);
+  return r;
+}
+
+// =====================================================================
+// MÀN HÌNH KIỂM TRA & LƯU
+// =====================================================================
+function crop(c, x0, y0, x1, y1) {
+  const o = document.createElement('canvas'), W = (x1 - x0) * K, H = (y1 - y0) * K;
+  o.width = W; o.height = H; o.getContext('2d').drawImage(c, (x0 - OX) * K, (y0 - OY) * K, W, H, 0, 0, W, H);
+  return o.toDataURL('image/jpeg', 0.85);
+}
+function showReview(qr, omr, canvas) {
+  const nameImg = crop(canvas, 175, 157, 388, 201), idImg = crop(canvas, 396, 56, 560, 80);
+  if (state.debug) {
+    const ctx = canvas.getContext('2d'); ctx.strokeStyle = 'rgba(255,0,0,.8)';
+    for (const b of [...state.template.p1, ...state.template.p2, ...state.template.p3, ...state.template.sbd, ...state.template.md]) { ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, 7); ctx.stroke(); }
+  }
+  state.cur = { omr, canvas, ed: new Set() };
+  const url = canvas.toDataURL('image/jpeg', 0.85), sbd = omr.sbd.replace(/\?/g, '');
+  $('resultContent').innerHTML = `
+    <div id="scoreBox"></div>
+    <div class="info-card"><div class="row2">
+      <label>Số báo danh (có thể trống)<input id="inSbd" inputmode="numeric" maxlength="6" value="${sbd}" oninput="onSbd()"></label>
+      <label>Mã đề<input id="inMd" maxlength="4" autocapitalize="characters" value="${omr.made.replace(/\?/g, '')}" oninput="renderScore()"></label></div>
+      <label class="small">Họ tên<input id="inName" class="txt" type="text" value="${escapeHTML(nameOf(sbd))}" oninput="this.dataset.t=1;renderScore()"></label>
+      <div class="small" style="margin-top:6px">Đọc sai thì sửa trực tiếp các ô trên.</div></div>
+    <div class="info-card"><h3>✍️ Họ tên & số báo danh trên phiếu</h3>
+      <img class="warp-preview" src="${nameImg}" onclick="openViewer(this.src)"><img class="warp-preview" src="${idImg}" onclick="openViewer(this.src)"></div>
+    <button class="main-btn" style="margin:0 0 10px;background:#EF6C00" onclick="openEditor()">✏️ Tô lại / sửa đáp án trên ảnh (bài bị mờ)</button>
+    <div id="warnBox"></div>
+    <button class="main-btn" onclick="saveCur(true)">💾 Lưu & quét tiếp</button>
+    <button class="main-btn secondary" onclick="saveCur(false)">Lưu & xem danh sách</button>
+    <button class="main-btn secondary" onclick="processCanvas(rotateCanvas(state.lastWork, 180))">🔄 Phiếu bị ngược? Xoay 180° & chấm lại</button>
+    <div class="info-card" style="margin-top:12px"><h3>📷 Ảnh đã hiệu chỉnh</h3><img class="warp-preview" src="${url}" onclick="openViewer(this.src)"></div>
+    ${qr ? `<div class="info-card"><h3>🔍 Mã QR</h3><div style="word-break:break-all;color:#9e9e9e">${escapeHTML(qr)}</div></div>` : ''}
+    <div style="height:24px"></div>`;
+  showScreen('resultScreen'); renderScore(); renderWarn();
+  const g = state.cur.g;
+  if (state.auto && /^\d{6}$/.test($('inSbd').value) && !g.noKey && state.cur.made.length >= 3) saveCur(true);
+}
+function onSbd() {
+  const nm = nameOf($('inSbd').value.trim()), el = $('inName');
+  if (nm && !el.dataset.t) el.value = nm;
+  renderScore();
+}
+function renderScore() {
+  const typed = $('inMd').value.trim(), rk = resolveKey(typed), cands = rk ? [] : candKeys(typed);
+  const g = grade(state.cur.omr, rk || typed); state.cur.made = rk || typed; state.cur.g = g;
+  const fx = x => x.toFixed(state.ex.sc.round), nm = $('inName').value.trim(), sbd = $('inSbd').value.trim();
+  $('scoreBox').innerHTML = (g.noKey ? '<div class="info-card warn">' + (cands.length > 1 ? 'Mã đề khớp nhiều đáp án: <b>' + cands.join(', ') + '</b> — gõ đủ mã đề ở ô bên dưới.' : 'Chưa có đáp án cho mã đề này — hãy nạp file Excel đáp án.') + '</div>' : (rk !== typed ? '<div class="small" style="margin-bottom:8px">Khớp mã đề trong Excel: <b>' + rk + '</b></div>' : '')) + `
+    <div class="score-card"><div class="score-label" style="font-size:16px;font-weight:600">${escapeHTML(nm) || '(chưa có họ tên)'}</div>
+      <div class="score-label">SBD ${sbd || '—'} · Mã đề ${state.cur.made || '—'}</div>
+      <div class="score-value">${fx(g.total)}</div>${g.max ? `<div class="score-max">/ ${g.max}</div>` : ''}</div>
+    <div class="part-card"><div class="part-info"><div class="part-title">Phần I</div><div class="part-detail">${g.c1} câu đúng</div></div><div class="part-score">${fx(g.s1)}</div></div>
+    <div class="part-card"><div class="part-info"><div class="part-title">Phần II</div></div><div class="part-score">${fx(g.s2)}</div></div>
+    <div class="part-card"><div class="part-info"><div class="part-title">Phần III</div><div class="part-detail">${g.c3} câu đúng</div></div><div class="part-score">${fx(g.s3)}</div></div>
+    ${g.details.length ? `<div class="info-card warn"><h3>Chi tiết sai (${g.details.length})</h3><ul>${g.details.map(d => `<li>${escapeHTML(d)}</li>`).join('')}</ul></div>` : ''}`;
+}
+function saveCur(next) {
+  const sbd = $('inSbd').value.trim(), made = state.cur.made, g = state.cur.g, name = $('inName').value.trim();
+  if (sbd && !/^\d{6}$/.test(sbd)) return showError('Số báo danh phải đủ 6 chữ số (hoặc để trống)');
+  if (!/^[0-9A-Za-z]{3,4}$/.test(made)) return showError('Mã đề phải 3–4 ký tự');
+  if (g.noKey && !state.auto && !confirm('Mã đề ' + made + ' chưa có đáp án (điểm 0). Vẫn lưu?')) return;
+  const key = sbd ? sbd + '_' + made : tmpKey(), dup = !!state.results[key], o = state.cur.omr;
+  const rec = { sbd, made, name, omr: { p1: o.p1, p2: o.p2, p3: o.p3 }, s1: g.s1, s2: g.s2, s3: g.s3, total: g.total, t: Date.now() };
+  state.results[key] = rec; saveAll();
+  const b = $('lastBanner');
+  b.innerHTML = `${escapeHTML(name) || (sbd ? 'SBD ' + sbd : 'Bài chưa có SBD')} · ${made}<span class="big">${g.total.toFixed(state.ex.sc.round)}${g.max ? ' / ' + g.max : ''}</span>${dup ? '(đã cập nhật)' : (sbd ? 'Đã lưu SBD ' + sbd : 'Đã lưu · chưa có SBD')}`;
+  b.classList.add('show'); clearTimeout(b._t); b._t = setTimeout(() => b.classList.remove('show'), 9000);
+  if (next) startScanner(); else { showScreen('listScreen'); renderList(); }
+}
+
+// =====================================================================
+// DANH SÁCH / THỐNG KÊ / XUẤT EXCEL — sắp xếp theo số báo danh
+// =====================================================================
+const tmpKey = () => 'x' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
+const sorted = () => Object.entries(state.results).map(([k, r]) => ({ ...r, _k: k })).sort((a, b) => (!a.sbd - !b.sbd) || a.sbd.localeCompare(b.sbd) || a.made.localeCompare(b.made) || (a.t - b.t));
+function renderList() {
+  const all = sorted(), mds = [...new Set(all.map(r => r.made))].sort(), sel = $('fMd'), cur = sel.value || '', fx = x => x.toFixed(state.ex.sc.round);
+  sel.innerHTML = '<option value="">' + escapeHTML(state.ex.name) + ' — tất cả mã đề</option>' + mds.map(m => `<option value="${m}">Mã đề ${m}</option>`).join('');
+  sel.value = mds.includes(cur) ? cur : '';
+  const L = sel.value ? all.filter(r => r.made === sel.value) : all, t = L.map(r => r.total);
+  $('stats').innerHTML = L.length ? `Số bài: <b>${L.length}</b> · TB: <b>${r2(t.reduce((a, b) => a + b, 0) / L.length)}</b> · Cao nhất: <b>${Math.max(...t)}</b> · Thấp nhất: <b>${Math.min(...t)}</b>` : 'Chưa có bài nào.';
+  $('rows').innerHTML = L.map(r => `<tr><td class="ed" onclick="editRec('${r._k}')">${r.sbd || '—'}</td><td class="nm ed" onclick="editRec('${r._k}')">${escapeHTML(r.name || nameOf(r.sbd)) || '<span class="small">(chưa có)</span>'}</td><td>${r.made}</td><td>${fx(r.s1)}</td><td>${fx(r.s2)}</td><td>${fx(r.s3)}</td><td class="b">${fx(r.total)}</td><td><button class="x" onclick="delRes('${r._k}')">✕</button></td></tr>`).join('');
+}
+function editRec(k) {
+  const r = state.results[k]; if (!r) return;
+  const s = prompt('Số báo danh (6 số; để trống nếu chưa có):', r.sbd); if (s === null) return;
+  const sbd = s.trim(); if (sbd && !/^\d{6}$/.test(sbd)) return showError('Số báo danh phải đủ 6 chữ số');
+  const nm = prompt('Họ tên:', r.name || nameOf(sbd)); if (nm === null) return;
+  const nk = sbd ? sbd + '_' + r.made : (k[0] === 'x' ? k : tmpKey());
+  if (nk !== k && state.results[nk] && !confirm('Đã có bài SBD ' + sbd + ' mã đề ' + r.made + '. Ghi đè?')) return;
+  if (nk !== k) delete state.results[k];
+  state.results[nk] = { ...r, sbd, name: nm.trim() };
+  saveAll(); renderList();
+}
+function delRes(k) { delete state.results[k]; saveAll(); renderList(); }
+function clearAll() { if (confirm('Xoá toàn bộ kết quả của kỳ thi này?')) { for (const k in state.results) delete state.results[k]; saveAll(); renderList(); } }
+function regradeAll(quiet) {
+  for (const k in state.results) { const r = state.results[k], g = grade(r.omr, r.made); Object.assign(r, { s1: g.s1, s2: g.s2, s3: g.s3, total: g.total }); }
+  saveAll(); renderList(); if (!quiet) toastOk('Đã chấm lại');
+}
+function saveWb(wb, name) {
+  const f = new File([XLSX.write(wb, { type: 'array', bookType: 'xlsx' })], name, { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+  if (navigator.canShare && navigator.canShare({ files: [f] }))
+    return navigator.share({ files: [f] }).catch(e => { if (e.name !== 'AbortError') XLSX.writeFile(wb, name); });
+  XLSX.writeFile(wb, name);
+}
+function exportXlsx() {
+  const L = sorted(); if (!L.length) return showError('Chưa có kết quả để xuất');
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([['STT', 'Số báo danh', 'Họ tên', 'Mã đề', 'Điểm Phần I', 'Điểm Phần II', 'Điểm Phần III', 'Tổng điểm'], ...L.map((r, i) => [i + 1, r.sbd, r.name || nameOf(r.sbd), r.made, r.s1, r.s2, r.s3, r.total])]), 'KetQua_theoSBD');
+  const mds = [...new Set(L.map(r => r.made))].sort();
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([['Mã đề', 'Số bài', 'Điểm TB', 'Cao nhất', 'Thấp nhất'], ...mds.map(m => { const t = L.filter(r => r.made === m).map(r => r.total); return [m, t.length, r2(t.reduce((a, b) => a + b, 0) / t.length), Math.max(...t), Math.min(...t)]; })]), 'ThongKe_theoMaDe');
+  const s = state.ex.sc;
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([['Kỳ thi', state.ex.name], ['Phần I (điểm/câu)', s.p1], ['Phần II: 1/2/3/4 ý đúng', s.p2.slice(1).join(' / ')], ['Phần III (điểm/câu)', s.p3], ['Quy về thang', s.scale || 'không'], ['Làm tròn', s.round + ' số lẻ']]), 'ThangDiem');
+  const slug = state.ex.name.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/gi, 'd').replace(/[^\w]+/g, '_');
+  saveWb(wb, 'ket_qua_' + slug + '_' + new Date().toISOString().slice(0, 10) + '.xlsx');
+}
+
+// =====================================================================
+// UI
+// =====================================================================
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  $(id).classList.add('active');
+  if (id !== 'scannerScreen' && id !== 'resultScreen') stopStream(); // giữ camera khi xem kết quả → iPhone không hỏi quyền lại
+  if (id === 'homeScreen') updateHome();
+}
+function updateHome() {
+  $('homeInfo').innerHTML = `🗂️ Kỳ thi: <b>${escapeHTML(state.ex.name)}</b><br>📑 Đáp án: <b>${Object.keys(state.keys).length}</b> mã đề · 📊 Đã chấm: <b>${Object.keys(state.results).length}</b> bài<br><span class="small">Đặt phiếu thẳng, thấy rõ 4 ô vuông đen ở 4 góc, đủ sáng. iPhone: dùng Safari (HTTPS); nên "Thêm vào MH chính" và xuất Excel thường xuyên.</span>`;
+}
+function init() {
+  if (navigator.storage && navigator.storage.persist) navigator.storage.persist();
+  const c = ld('tn_cfg', {}); if (c.th) state.threshold = c.th; state.auto = !!c.auto;
+  state.exams = ld('tn_exams', null);
+  if (!state.exams) { // chuyển dữ liệu từ bản cũ sang "Kỳ thi 1"
+    const e = mkExam('Kỳ thi 1'); e.keys = ld('tn_keys', {}); e.results = ld('tn_res', {});
+    if (c.scores) { e.sc.p1 = c.scores.p1; e.sc.p3 = c.scores.p3; } e.sc.scale = c.scale || 0;
+    state.exams = { e1: e }; sv('tn_cur', 'e1'); saveAll();
+  }
+  const cur = ld('tn_cur', null); selectExam(state.exams[cur] ? cur : Object.keys(state.exams)[0]);
+  buildTemplate(); $('edCv').addEventListener('click', edTap); retryCV(); updateHome();
+}
+
+// =====================================================================
+// NHIỀU KỲ THI + THANG ĐIỂM + DANH SÁCH HỌC SINH
+// =====================================================================
+const toastOk = m => { showError(m); const t = $('errorToast'); t.style.background = '#2E7D32'; clearTimeout(t._g); t._g = setTimeout(() => t.style.background = '', 4500); };
+const mkExam = n => ({ name: n, keys: {}, results: {}, roster: {}, sc: { p1: 0.25, p3: 0.25, p2: [0, 0.1, 0.25, 0.5, 1], scale: 0, round: 2 } });
+const saveAll = () => sv('tn_exams', state.exams);
+function selectExam(id) { const e = state.exams[id]; if (!e) return; state.ex = e; state.curId = id; state.keys = e.keys; state.results = e.results; sv('tn_cur', id); }
+function nameOf(sbd) { const r = state.ex.roster || {}; return r[sbd] || r[String(sbd).slice(-6)] || ''; }
+const PRESETS = {
+  t25: { p1: 0.25, p3: 0.25, p2: [0, 0.1, 0.25, 0.5, 1], scale: 0 },
+  t10: { p1: 0.25, p3: 0.25, p2: [0, 0.1, 0.25, 0.5, 1], scale: 10 },
+  eq: { p1: 1, p3: 1, p2: [0, 0.25, 0.5, 0.75, 1], scale: 10 }
+};
+function renderExam() {
+  $('exSel').innerHTML = Object.entries(state.exams).map(([id, e]) => `<option value="${id}">${escapeHTML(e.name)}</option>`).join('');
+  $('exSel').value = state.curId;
+  const s = state.ex.sc; $('ep1').value = s.p1; $('ep3').value = s.p3; [1, 2, 3, 4].forEach(i => $('e' + i).value = s.p2[i]);
+  $('esc').value = s.scale; $('ern').value = s.round; $('preset').value = '';
+  $('exInfo').innerHTML = `Đáp án: <b>${Object.keys(state.keys).length}</b> mã đề · Bài đã chấm: <b>${Object.keys(state.results).length}</b> · Danh sách HS: <b>${Object.keys(state.ex.roster || {}).length}</b>`;
+}
+function pickExam(id) { selectExam(id); renderExam(); updateHome(); }
+function newExam() {
+  const n = prompt('Tên kỳ thi mới:'); if (!n || !n.trim()) return;
+  const id = 'e' + Date.now(); state.exams[id] = mkExam(n.trim()); selectExam(id); saveAll(); renderExam(); updateHome();
+}
+function renameExam() { const n = prompt('Tên mới:', state.ex.name); if (n && n.trim()) { state.ex.name = n.trim(); saveAll(); renderExam(); updateHome(); } }
+function delExam() {
+  if (Object.keys(state.exams).length < 2) return showError('Phải còn ít nhất 1 kỳ thi');
+  if (!confirm('Xoá kỳ thi "' + state.ex.name + '" cùng toàn bộ đáp án và kết quả?')) return;
+  delete state.exams[state.curId]; selectExam(Object.keys(state.exams)[0]); saveAll(); renderExam(); updateHome();
+}
+function saveScoring() {
+  const n = (id, d) => { const v = parseFloat(String($(id).value).replace(',', '.')); return isNaN(v) ? d : v; }, s = state.ex.sc;
+  s.p1 = n('ep1', 0.25); s.p3 = n('ep3', 0.25); s.p2 = [0, n('e1', 0.1), n('e2', 0.25), n('e3', 0.5), n('e4', 1)];
+  s.scale = Math.max(0, n('esc', 0)); s.round = Math.max(0, Math.min(3, Math.round(n('ern', 2))));
+  regradeAll(true); renderExam(); toastOk('Đã lưu thang điểm & chấm lại');
+}
+function applyPreset(v) { if (!PRESETS[v]) return; Object.assign(state.ex.sc, JSON.parse(JSON.stringify(PRESETS[v]))); regradeAll(true); renderExam(); toastOk('Đã áp dụng & chấm lại'); }
+function importRoster(e) {
+  const f = e.target.files[0]; e.target.value = ''; if (!f) return;
+  const fr = new FileReader();
+  fr.onload = () => {
+    try {
+      const wb = XLSX.read(fr.result, { type: 'array' }), R = state.ex.roster = state.ex.roster || {}; let n = 0;
+      for (const sn of wb.SheetNames) {
+        const a = XLSX.utils.sheet_to_json(wb.Sheets[sn], { header: 1, defval: '', raw: true });
+        let hr = -1, cs = -1, cn = -1;
+        for (let r = 0; r < a.length; r++) {
+          cs = -1; cn = -1;
+          a[r].forEach((c, j) => { const t = String(c).trim().normalize('NFC'); if (/^(số\s*báo\s*danh|sbd)$/i.test(t)) cs = j; else if (/^họ\s*(và\s*)?tên$/i.test(t)) cn = j; });
+          if (cs >= 0 && cn >= 0) { hr = r; break; }
+        }
+        if (hr < 0) continue;
+        for (let r = hr + 1; r < a.length; r++) {
+          const s = String(a[r][cs]).replace(/\D/g, ''), nm = String(a[r][cn]).trim();
+          if (s && nm) { R[s.slice(-6).padStart(6, '0')] = nm; n++; }
+        }
+      }
+      if (!n) return showError('Không thấy cột "SBD / Số báo danh" và "Họ tên" trong file');
+      saveAll(); renderExam(); toastOk('Đã nạp ' + n + ' học sinh');
+    } catch (err) { showError('Lỗi đọc Excel: ' + err.message); }
+  };
+  fr.readAsArrayBuffer(f);
+}
+
+// =====================================================================
+// TÔ LẠI / SỬA ĐÁP ÁN TRỰC TIẾP TRÊN ẢNH (cho phiếu bị mờ)
+// =====================================================================
+const ED = { z: 3 };
+function renderWarn() {
+  const w = state.cur.omr.warnings;
+  $('warnBox').innerHTML = w.length ? `<div class="info-card warn"><h3>⚠️ Cảnh báo (${w.length})</h3><ul>${w.slice(0, 15).map(x => `<li>${escapeHTML(x)}</li>`).join('')}</ul></div>` : '';
+}
+function edParts() { const t = state.template; return [['p1', t.p1], ['p2', t.p2], ['p3', t.p3], ['sbd', t.sbd], ['md', t.md]]; }
+function edSel(part, b) {
+  const o = state.cur.omr;
+  if (part === 'p1') return o.p1[b.q] === b.o;
+  if (part === 'p2') return o.p2[b.q + '_' + b.i] === b.o;
+  if (part === 'p3') return (o.p3c[b.q] || [])[b.c] === b.o;
+  if (part === 'sbd') return o.sbd[b.c] === b.o;
+  return o.made[b.c] === b.o;
+}
+const edId = (part, b) => [part, b.q, b.i, b.c, b.o].join(':');
+function edDraw() {
+  const cv = $('edCv'), ctx = cv.getContext('2d'), c = state.cur, o = c.omr, t = state.template, key = state.keys[c.made];
+  ctx.drawImage(c.canvas, 0, 0);
+  // Viền cam: câu cần có đáp án (theo đáp án đã nạp) nhưng chưa phát hiện ô nào được tô
+  ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(255,152,0,.95)';
+  const box = items => {
+    const xs = items.map(b => b.x), ys = items.map(b => b.y), r = items[0].r * 1.8, x0 = Math.min(...xs), y0 = Math.min(...ys);
+    ctx.strokeRect(x0 - r, y0 - r, Math.max(...xs) - x0 + 2 * r, Math.max(...ys) - y0 + 2 * r);
+  };
+  const g1 = groupBy(t.p1, b => b.q);
+  for (const q in g1) if (!o.p1[q] && (!key || key.p1[q - 1])) box(g1[q]);
+  const g2 = groupBy(t.p2, b => b.q + '_' + b.i);
+  for (const k in g2) { const [q, i] = k.split('_'); if (!o.p2[k] && (!key || (key.p2[q - 1] && key.p2[q - 1][i]))) box(g2[k]); }
+  for (const [part, list] of edParts()) for (const b of list) {
+    if (!edSel(part, b)) continue;
+    const edited = c.ed.has(edId(part, b));
+    ctx.beginPath(); ctx.arc(b.x, b.y, b.r * 1.25, 0, 7);
+    if (edited) { ctx.fillStyle = 'rgba(21,101,192,.75)'; ctx.fill(); }
+    ctx.lineWidth = 3; ctx.strokeStyle = edited ? '#42A5F5' : '#00E676'; ctx.stroke();
+  }
+}
+function edScoreText() {
+  const g = state.cur.g;
+  $('edScore').textContent = !g || g.noKey ? '—' : g.total.toFixed(state.ex.sc.round);
+}
+function edTap(ev) {
+  const cv = $('edCv'), r = cv.getBoundingClientRect(), s = cv.width / r.width;
+  const x = (ev.clientX - r.left) * s, y = (ev.clientY - r.top) * s;
+  let best = null, bd = Infinity;
+  for (const [part, list] of edParts()) for (const b of list) { const d = Math.hypot(b.x - x, b.y - y); if (d < bd) { bd = d; best = [part, b]; } }
+  if (best && bd <= best[1].r * 2.2) edToggle(best[0], best[1]);
+}
+function edToggle(part, b) {
+  const c = state.cur, o = c.omr, id = edId(part, b), on = edSel(part, b), w = o.warnings;
+  const drop = p => { for (let i = w.length - 1; i >= 0; i--) if (w[i].startsWith(p)) w.splice(i, 1); };
+  let label;
+  if (part === 'p1') { if (on) delete o.p1[b.q]; else o.p1[b.q] = b.o; drop(`Câu ${b.q} (I)`); label = 'I.' + b.q; }
+  else if (part === 'p2') { const k = b.q + '_' + b.i; if (on) delete o.p2[k]; else o.p2[k] = b.o; drop(`Câu ${b.q} (II)`); label = 'II.' + b.q + 'abcd'[b.i]; }
+  else if (part === 'p3') { const a = o.p3c[b.q] = o.p3c[b.q] || ['', '', '', '']; a[b.c] = on ? '' : b.o; o.p3[b.q] = a.join(''); label = 'III.' + b.q; }
+  else {
+    const f = part === 'sbd' ? 'sbd' : 'made', a = o[f].split(''); a[b.c] = on ? '?' : b.o; o[f] = a.join('');
+    $(part === 'sbd' ? 'inSbd' : 'inMd').value = o[f].replace(/\?/g, '');
+    label = part === 'sbd' ? 'SBD' : 'Mã đề';
+  }
+  if (on) c.ed.delete(id); else c.ed.add(id);
+  if (part === 'sbd') onSbd(); else renderScore();
+  edDraw(); edScoreText();
+  $('edInfo').textContent = label + (on ? ': bỏ tô' : ': tô ' + b.o) + ' · chạm ô khác để sửa tiếp';
+}
+function openEditor() {
+  const cv = $('edCv'), c = state.cur;
+  cv.width = c.canvas.width; cv.height = c.canvas.height;
+  $('editor').classList.add('active');
+  edApplyZoom(); edDraw(); edScoreText();
+  $('edScroll').scrollTo(0, 0);
+  $('edInfo').textContent = 'Chạm vào ô để tô / bỏ tô. Viền cam = câu chưa có đáp án · xanh dương = ô bạn tô.';
+}
+function edApplyZoom() { $('edCv').style.width = Math.round($('edScroll').clientWidth * ED.z) + 'px'; }
+function edZoom(d) {
+  const sc = $('edScroll'), cv = $('edCv');
+  const fx = (sc.scrollLeft + sc.clientWidth / 2) / cv.clientWidth, fy = (sc.scrollTop + sc.clientHeight / 2) / cv.clientHeight;
+  ED.z = Math.max(1, Math.min(6, ED.z + d)); edApplyZoom();
+  sc.scrollTo(fx * cv.clientWidth - sc.clientWidth / 2, fy * cv.clientHeight - sc.clientHeight / 2);
+}
+function edJump(part) {
+  const P = { sbd: [395, 52], p1: [40, 265], p2: [130, 278], p3: [130, 395] }[part], cv = $('edCv'), k = cv.clientWidth / cv.width;
+  $('edScroll').scrollTo({ left: Math.max(0, (P[0] - OX) * K * k - 8), top: Math.max(0, (P[1] - OY) * K * k - 8), behavior: 'smooth' });
+}
+function closeEditor() {
+  const o = state.cur.omr, w = o.warnings;
+  for (let i = w.length - 1; i >= 0; i--) if (w[i] === W_SBD || w[i] === W_MD) w.splice(i, 1);
+  if (o.sbd.includes('?')) w.push(W_SBD);
+  if (o.made.includes('?')) w.push(W_MD);
+  $('editor').classList.remove('active');
+  renderWarn(); renderScore();
+}
+
+window.addEventListener('load', init);
+
+// Tắt camera khi chuyển tab/khóa màn hình; bật lại khi quay về
+window.addEventListener('beforeunload', stopStream);
+window.addEventListener('pagehide', stopStream);
+document.addEventListener('visibilitychange', () => {
+  const onScan = document.getElementById('scannerScreen').classList.contains('active');
+  if (document.hidden) stopStream();
+  else if (onScan) startScanner();
+});
+</script>
+</body>
+</html>
